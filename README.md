@@ -8,20 +8,37 @@ Microservice dari sistem **Capstone Platform**. Repositori ini memuat *source co
 
 | Nama | NIM | Role |
 | :--- | :--- | :--- |
-| **Muhammad Affandi Argya Bagaskara** | 24/538984/TK/59778 | Project Manager |
+| **Muhammad Affandi Argya Bagaskara** | 24/538984/TK/59778 | Product Owner |
 | **Christian Kevin Andhika Danidaiva** | 23/513576/TK/56433 | DevOps Engineer |
-| **Ramzi Alfito Rizky** | 24/540550/TK/60008 | Software Engineer |
-| **Bayu Rahmat Kurnia** | 24/533736/TK/59139 | Software Engineer |
+| **Ramzi Alfito Rizky** | 24/540550/TK/60008 | Backend Engineer |
+| **Bayu Rahmat Kurnia** | 24/533736/TK/59139 | Backend Engineer |
 | **Moses Saidasdo Purba** | 23/523274/TK/57854 | Documentation Engineer |
-| **Akio** | NIM | Test Engineer |
+| **Akio Afifian Ahsan** | 24/542230/TK/60198 | Quality Assurance |
 
 ---
 
 ## Getting Started
 
-Install project dependency
+Jalankan environment setiap mulai sesi pengembangan lokal
 ```bash
-npm install
+docker compose watch
+```
+
+Matikan environment setelah sesi pengembangan selesai
+```bash
+docker compose down
+```
+
+## Instalasi package
+
+```bash
+npm install <nama-package>
+```
+or
+
+Jika tidak mengunduh npm di komputer:
+```bash
+docker compose exec api npm install <nama-package>
 ```
 
 ## Workflow
@@ -36,25 +53,29 @@ git pull origin main
 
 **2. Pindah ke branch untuk pengembangan fitur:**
 ```bash
-git switch -c feat/[nama-fitur]  # Untuk membuat branch baru
+git switch -c feat/[nama-fitur].[nama developer]  # Untuk membuat branch baru
 ```
 or
 ```bash
-git switch feat/[nama-fitur] # Jika branch sudah ada
+git switch feat/[nama-fitur].[nama developer] # Jika branch sudah ada
 ```
 
-**3. Implementasi dan commit:**
+**3. Code:** 
+
+Setiap kode di-save, perubahan akan langsung disinkronisasi oleh Docker dan dapat langsung dilihat
+
+**4. Commit:**
 ```bash
 git add .
 git commit -m "feat: [deskripsi fitur]"
 ```
 
-**4. Push ke repositori:**
+**5. Push ke repositori:**
 ```bash
 git push origin feat/[nama-fitur]
 ```
 
-**5. Pull Request (PR):**
+**6. Pull Request (PR):**
 Ajukan PR ke cabang `main`. Wajib mendapatkan persetujuan (*approval*) minimal dari 1 anggota tim sebelum di-*merge*.
 
 ## Penamaan Branch
