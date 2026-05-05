@@ -79,9 +79,9 @@ git push origin feat/[nama-fitur]
 Ajukan PR ke cabang `main`. Wajib mendapatkan persetujuan (*approval*) minimal dari 1 anggota tim sebelum di-*merge*.
 
 ## Penamaan Branch
-* **Fitur:** `feat/[nama-fitur]` (Ex: `feat/create-bid`)
-* **Bugfix:** `bugfix/[nama-bug]` (Ex: `bugfix/fix-validation`)
-* **Dokumentasi:** `docs/[nama-dokumen]` (Ex: `docs/api-spec`)
+* **Fitur:** `feat/[nama-fitur].[nama-developer]` (Ex: `feat/create-bid.bayu`)
+* **Bugfix:** `bugfix/[nama-bug].[nama-developer]` (Ex: `bugfix/fix-validation.bayu`)
+* **Dokumentasi:** `docs/[nama-dokumen].[nama-developer]` (Ex: `docs/api-spec.bayu`)
 
 ## Konvensi Commit Message
 Gunakan standar [Conventional Commits](https://www.conventionalcommits.org/):
