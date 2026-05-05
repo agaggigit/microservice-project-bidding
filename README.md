@@ -58,6 +58,7 @@ git switch -c feat/[nama-fitur].[nama developer]  # Untuk membuat branch baru
 or
 ```bash
 git switch feat/[nama-fitur].[nama developer] # Jika branch sudah ada
+git pull --rebase origin main
 ```
 
 **3. Code:** 
