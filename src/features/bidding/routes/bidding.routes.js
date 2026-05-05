@@ -1,5 +1,12 @@
 const express = require('express')
 const router = express.Router()
+const biddingController = require('../controllers/bidding.controller')
+
+router.post('/', biddingController.createBid)
+
+router.get('/', (req,res) => {
+    res.send('ini adalah semua bidding')
+})
 
 router.get('/:id', (req,res) => {
     const id = req.params.id
