@@ -6,8 +6,6 @@ app.use(express.json())
 const projectsRoute = require('./features/projects/routes/project.routes')
 const biddingRoute = require('./features/bidding/routes/bidding.routes')
 
-app.use(express.json())
-
 app.use('/api/projects', projectsRoute)
 app.use('/api/bidding', biddingRoute)
 

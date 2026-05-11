@@ -9,9 +9,9 @@ router.get('/', authMiddleware, biddingController.getBids)
 
 router.post('/', biddingController.createBid)
 
-router.get('/:id', (req,res) => {
-    const id = req.params.id
-    res.send(`ini adalah bidding ${id}`)
+router.get('/:id', (req, res) => {
+  const id = req.params.id
+  res.send(`ini adalah bidding ${id}`)
 })
 
 module.exports = router
