@@ -8,9 +8,10 @@ const create = async (projectData) => {
       deskripsi_proyek,
       requirements,
       kuota_maksimal,
-      status_proyek
+      status_proyek,
+      budget_awal
     )
-    VALUES ($1, $2, $3, $4, $5, $6)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
   `
 
@@ -20,7 +21,8 @@ const create = async (projectData) => {
     projectData.deskripsi_proyek,
     projectData.requirements,
     projectData.kuota_maksimal,
-    projectData.status_proyek
+    projectData.status_proyek,
+    projectData.budget_awal
   ]
 
   const result = await db.query(sql, values)

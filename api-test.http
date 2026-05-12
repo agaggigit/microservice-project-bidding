@@ -1,0 +1,40 @@
+### Test API Root
+GET http://localhost:3000/
+
+### Buat Proyek Baru
+POST http://localhost:3000/api/projects
+Content-Type: application/json
+
+{
+  "judul_proyek": "Aplikasi E-Commerce",
+  "deskripsi_proyek": "Platform belanja online modern",
+  "requirements": "Pengalaman dengan React dan Node.js",
+  "mitra_id": 1,
+  "kuota_maksimal": 3,
+  "status_proyek": "Open",
+  "budget_awal": 5000000
+}
+
+### Lihat Semua Proyek
+GET http://localhost:3000/api/projects
+
+### Buat Bid Baru
+POST http://localhost:3000/api/bidding
+Content-Type: application/json
+
+{
+  "project_id": 4,
+  "group_id": "KLP001",
+  "student_id": "MHS001",
+  "priority": 1,
+  "document_url": "https://drive.google.com/file/d/proposal-sistem.pdf",
+  "tawaran_harga": 4500000,
+  "tawaran_waktu": "2026-06-20"
+}
+
+### Lihat Bid (perlu login - pakai header)
+GET http://localhost:3000/api/bidding
+# X-User-ID: 1
+# X-User-Type: mitra
+X-User-ID: KLP001
+X-User-Type: talent

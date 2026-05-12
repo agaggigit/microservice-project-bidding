@@ -64,6 +64,7 @@ CREATE TABLE bid (
 
 CREATE TABLE negosiasi(
     nego_id SERIAL PRIMARY KEY,
+    bid_id INT NOT NULL,
     response_harga DECIMAL(15, 2) NOT NULL,
     response_waktu DATE NOT NULL,
     role_ VARCHAR(10) NOT NULL CHECK(role_ IN ('Mitra', 'Kelompok')),

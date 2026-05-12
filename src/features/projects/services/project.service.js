@@ -105,6 +105,11 @@ const normalizeCreatePayload = (payload) => {
   const kuotaMaksimal = getOptionalPositiveInteger(projectPayload, 'kuota_maksimal', errors)
   const statusProyek = getOptionalStatus(projectPayload, 'status_proyek', errors)
 
+  if (projectPayload.budget_awal === undefined || projectPayload.budget_awal === null) {
+    errors.push('budget_awal is required')
+  }
+  const budgetAwal = projectPayload.budget_awal
+
   if (errors.length > 0) {
     throw createValidationError(errors)
   }
@@ -115,7 +120,8 @@ const normalizeCreatePayload = (payload) => {
     deskripsi_proyek: deskripsiProyek,
     requirements,
     kuota_maksimal: kuotaMaksimal || 1,
-    status_proyek: statusProyek || 'Open'
+    status_proyek: statusProyek || 'Open',
+    budget_awal: budgetAwal
   }
 }
 
@@ -141,6 +147,10 @@ const normalizeUpdatePayload = (payload, currentProject) => {
   const kuotaMaksimal = getOptionalPositiveInteger(projectPayload, 'kuota_maksimal', errors)
   const statusProyek = getOptionalStatus(projectPayload, 'status_proyek', errors)
 
+  const budgetAwal = projectPayload.budget_awal !== undefined 
+    ? projectPayload.budget_awal 
+    : currentProject.budget_awal
+  
   if (errors.length > 0) {
     throw createValidationError(errors)
   }
@@ -150,7 +160,8 @@ const normalizeUpdatePayload = (payload, currentProject) => {
     deskripsi_proyek: deskripsiProyek,
     requirements,
     kuota_maksimal: kuotaMaksimal || currentProject.kuota_maksimal,
-    status_proyek: statusProyek || currentProject.status_proyek
+    status_proyek: statusProyek || currentProject.status_proyek,
+    budget_awal: budgetAwal
   }
 }
 

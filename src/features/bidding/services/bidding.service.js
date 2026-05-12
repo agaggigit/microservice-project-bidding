@@ -45,7 +45,7 @@ class BiddingService {
 
   // Create a new bid with market maker logic
   async createBid(bidData) {
-    const { projectId, groupId, studentId, priority, documentUrl } = bidData;
+    const { projectId, groupId, studentId, priority, documentUrl, tawaranHarga, tawaranWaktu } = bidData;
 
     // Determine bid status based on project quota
     const currentBids = await this.countProjectBids(projectId);
@@ -57,8 +57,8 @@ class BiddingService {
     }
 
     const query = `
-      INSERT INTO bid (proyek_id, kelompok_id, pendaftar_id, status_bid, urutan_prioritas, dokumen_url)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO bid (proyek_id, kelompok_id, pendaftar_id, status_bid, urutan_prioritas, dokumen_url, tawaran_harga, tawaran_waktu)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
 
@@ -68,7 +68,9 @@ class BiddingService {
       studentId,
       bidStatus,
       priority,
-      documentUrl
+      documentUrl,
+      tawaranHarga, // Ini untuk $7
+      tawaranWaktu  // Ini untuk $8
     ]);
 
     return result.rows[0];

@@ -19,4 +19,4 @@ function compareTimes(time1, time2){
   return 0;
 }
 
-export { getDigitCount, isValidDate, compareTimes };
+module.exports = { getDigitCount, isValidDate, compareTimes };

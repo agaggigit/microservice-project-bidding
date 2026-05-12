@@ -26,13 +26,13 @@ class BiddingController {
 
   async createBid(req, res) {
     try {
-      const { group_id, project_id, priority, document_url, student_id } = req.body;
+      const { group_id, project_id, priority, document_url, student_id, tawaran_harga, tawaran_waktu } = req.body;
 
       // Validation: Check required fields
-      if (!group_id || !project_id || !priority || !document_url || !student_id) {
+      if (!group_id || !project_id || !priority || !document_url || !student_id || !tawaran_harga || !tawaran_waktu) {
         return res.status(400).json({
           success: false,
-          message: 'Missing required fields: group_id, project_id, priority, document_url, student_id',
+          message: 'Missing required fields: group_id, project_id, priority, document_url, student_id, tawaran_harga, tawaran_waktu',
           code: 'VALIDATION_ERROR'
         });
       }
@@ -101,7 +101,9 @@ class BiddingController {
         groupId: group_id,
         studentId: student_id,
         priority: priority,
-        documentUrl: document_url
+        documentUrl: document_url,
+        tawaranHarga: tawaran_harga, // Tambahan baru
+        tawaranWaktu: tawaran_waktu  // Tambahan baru
       };
 
       const newBid = await biddingService.createBid(bidData);
