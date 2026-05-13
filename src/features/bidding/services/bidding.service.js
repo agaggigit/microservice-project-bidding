@@ -95,6 +95,32 @@ class BiddingService {
     return project;
   }
 
+  // Get a single bid by its ID
+  async getBidById(bidId) {
+    const query = `
+      SELECT 
+        b.bid_id,
+        b.proyek_id,
+        b.kelompok_id,
+        b.pendaftar_id,
+        b.status_bid,
+        b.urutan_prioritas,
+        b.dokumen_url,
+        b.tawaran_harga,
+        b.tawaran_waktu,
+        b.waktu_bid,
+        p.judul_proyek,
+        p.status_proyek,
+        m.nama_mitra
+      FROM bid b
+      JOIN proyek p ON b.proyek_id = p.proyek_id
+      JOIN mitra m ON p.mitra_id = m.mitra_id
+      WHERE b.bid_id = $1
+    `;
+    const result = await pool.query(query, [bidId]);
+    return result.rows[0];
+  }
+
   // Get bids with role-based filtering
   // Mitra: hanya lihat bid untuk proyek miliknya
   // Talent: hanya lihat bid yang mereka submit
