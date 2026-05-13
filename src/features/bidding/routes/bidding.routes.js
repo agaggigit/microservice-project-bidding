@@ -7,11 +7,10 @@ const authMiddleware = require('../../../middleware/auth.middleware')
 // Memerlukan header: X-User-ID dan X-User-Type
 router.get('/', authMiddleware, biddingController.getBids)
 
-router.post('/', biddingController.createBid)
+// GET bid by id (was placeholder, now implemented)
+router.get('/:id', authMiddleware, biddingController.getBidById)
 
-router.get('/:id', (req, res) => {
-  const id = req.params.id
-  res.send(`ini adalah bidding ${id}`)
-})
+// POST create a new bid
+router.post('/', authMiddleware, biddingController.createBid)
 
 module.exports = router
