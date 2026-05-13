@@ -1,9 +1,21 @@
+### =============================================
+### PROJECTS API
+### =============================================
+
 ### Test API Root
 GET http://localhost:3000/
 
-### Buat Proyek Baru
+### Lihat Semua Proyek (public — no auth required)
+GET http://localhost:3000/api/projects
+
+### Lihat Detail Proyek (public)
+GET http://localhost:3000/api/projects/1
+
+### Buat Proyek Baru (requires auth)
 POST http://localhost:3000/api/projects
 Content-Type: application/json
+X-User-ID: 1
+X-User-Type: mitra
 
 {
   "judul_proyek": "Aplikasi E-Commerce",
@@ -15,12 +27,33 @@ Content-Type: application/json
   "budget_awal": 5000000
 }
 
-### Lihat Semua Proyek
-GET http://localhost:3000/api/projects
+### Update Proyek (requires auth)
+PUT http://localhost:3000/api/projects/1
+Content-Type: application/json
+X-User-ID: 1
+X-User-Type: mitra
 
-### Buat Bid Baru
+{
+  "judul_proyek": "Aplikasi E-Commerce v2",
+  "deskripsi_proyek": "Platform belanja online modern (updated)",
+  "requirements": "React, Node.js, PostgreSQL",
+  "budget_awal": 7500000
+}
+
+### Hapus Proyek (requires auth)
+DELETE http://localhost:3000/api/projects/1
+X-User-ID: 1
+X-User-Type: mitra
+
+### =============================================
+### BIDDING API
+### =============================================
+
+### Buat Bid Baru (requires auth)
 POST http://localhost:3000/api/bidding
 Content-Type: application/json
+X-User-ID: MHS001
+X-User-Type: talent
 
 {
   "project_id": 4,
@@ -32,9 +65,66 @@ Content-Type: application/json
   "tawaran_waktu": "2026-06-20"
 }
 
-### Lihat Bid (perlu login - pakai header)
+### Lihat Semua Bid — sebagai Mitra
 GET http://localhost:3000/api/bidding
-# X-User-ID: 1
-# X-User-Type: mitra
+X-User-ID: 1
+X-User-Type: mitra
+
+### Lihat Semua Bid — sebagai Talent
+GET http://localhost:3000/api/bidding
 X-User-ID: KLP001
 X-User-Type: talent
+
+### Lihat Detail Bid by ID
+GET http://localhost:3000/api/bidding/1
+X-User-ID: 1
+X-User-Type: mitra
+
+### =============================================
+### NEGOTIATING API
+### =============================================
+
+### Buat Negosiasi Baru (bid_id di URL param)
+POST http://localhost:3000/api/negotiating/1
+Content-Type: application/json
+X-User-ID: KLP001
+X-User-Type: talent
+
+{
+  "response_harga": 4200000,
+  "response_waktu": "2026-06-25",
+  "role_": "Kelompok"
+}
+
+### Buat Negosiasi — Response dari Mitra
+POST http://localhost:3000/api/negotiating/1
+Content-Type: application/json
+X-User-ID: 1
+X-User-Type: mitra
+
+{
+  "response_harga": 4350000,
+  "response_waktu": "2026-06-22",
+  "role_": "Mitra"
+}
+
+### Lihat Semua Negosiasi
+GET http://localhost:3000/api/negotiating/
+X-User-ID: 1
+X-User-Type: mitra
+
+### Lihat Negosiasi per Bid ID
+GET http://localhost:3000/api/negotiating/1
+X-User-ID: 1
+X-User-Type: mitra
+
+### Hapus Negosiasi
+DELETE http://localhost:3000/api/negotiating/
+Content-Type: application/json
+X-User-ID: KLP001
+X-User-Type: talent
+
+{
+  "nego_id": 1,
+  "bid_id": 1
+}
