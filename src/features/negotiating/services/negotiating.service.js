@@ -1,17 +1,16 @@
 const pool = require('../../../config/db');
-const helpers = require('../../../helper_function/functions');
 
-class negotiatingService {
-  // Check if project exists and get its details
-  async getBitDetails(BitId) {
+class NegotiatingService {
+  // Check if bid exists and get its details (fixed typo: getBitDetails → getBidDetails)
+  async getBidDetails(bidId) {
     const query = 'SELECT * FROM bid WHERE bid_id = $1';
-    const result = await pool.query(query, [BitId]);
+    const result = await pool.query(query, [bidId]);
     return result.rows[0];
   }
 
-  // Create a new negotiation
+  // Create a new negotiation (fixed typo: bit_Id → bid_id)
   async createNegotiation(negotiationData) {
-    const { bit_Id, response_harga, response_waktu, role_ } = negotiationData;
+    const { bid_id, response_harga, response_waktu, role_ } = negotiationData;
 
     const query = `
       INSERT INTO negosiasi (bid_id, response_harga, response_waktu, role_)
@@ -20,7 +19,7 @@ class negotiatingService {
     `;
 
     const result = await pool.query(query, [
-      bit_Id,
+      bid_id,
       response_harga,
       response_waktu,
       role_
@@ -29,48 +28,58 @@ class negotiatingService {
     return result.rows[0];
   }
 
- //Delete a negotiation by id
+  // Delete a negotiation by id (fixed: checkArr.rows bug — getNegotiationsByBidId already returns rows)
   async deleteNegotiation(negotiationId, bidId) {
-    const query = 'DELETE FROM negosiasi WHERE id = $1 RETURNING *';
-    //check if there is a negotiation from opposite role before deleting
-    const checkArr = await this.getNegotiationsByBidId(bidId); 
-    const nego_to_delete = checkArr.rows.find(nego => nego.id === negotiationId)
-    if (!nego_to_delete) {
-      throw new Error('Negotiation not found');
-    }
-    const oppositeRole = nego_to_delete.role_ === 'kelompok' ? 'mitra' : 'kelompok';
+    const query = 'DELETE FROM negosiasi WHERE nego_id = $1 RETURNING *';
 
-    const hasOppositeRole = checkArr.rows.some(nego => nego.role_ === oppositeRole);
+    // Check if there is a negotiation from opposite role before deleting
+    const negotiations = await this.getNegotiationsByBidId(bidId);
+    const negoToDelete = negotiations.find(nego => nego.nego_id === negotiationId);
 
-    if(hasOppositeRole){
-      const oppositeLastNego = () => {
-        if (checkArr[0].role_ === oppositeRole){
-          return true;
-        }return false;
-      }
-      if (oppositeLastNego()){
-        throw new Error(`Cannot delete the last negotiation because ${oppositeRole} has replied.`);
-      }
-      const deleteResult = await pool.query(query, [negotiationId]);
-      return deleteResult.rows[0];
+    if (!negoToDelete) {
+      throw new Error('Negotiation not found for this bid');
     }
+
+    const oppositeRole = negoToDelete.role_ === 'Kelompok' ? 'Mitra' : 'Kelompok';
+    const hasOppositeRole = negotiations.some(nego => nego.role_ === oppositeRole);
+
+    if (hasOppositeRole) {
+      // Check if the most recent negotiation is from the opposite role
+      // If so, we can't delete because they already replied
+      if (negotiations[0].role_ === oppositeRole) {
+        throw new Error(`Cannot delete: ${oppositeRole} has already replied to this negotiation.`);
+      }
+    }
+
     const deleteResult = await pool.query(query, [negotiationId]);
     return deleteResult.rows[0];
   }
 
- // Get all negotiations for a specific bid_id
- async getNegotiationsByBidId(bidId) {
-  const requestQuery = 'SELECT * FROM negosiasi WHERE bid_id = $1 ORDER BY created_at DESC';
-  const result = await pool.query(requestQuery, [bidId])
-  return result.rows;
- }
+  // Get all negotiations (NEW — was placeholder before)
+  async getAllNegotiations() {
+    const query = `
+      SELECT n.*, b.proyek_id, b.kelompok_id, b.status_bid
+      FROM negosiasi n
+      JOIN bid b ON n.bid_id = b.bid_id
+      ORDER BY n.created_at DESC
+    `;
+    const result = await pool.query(query);
+    return result.rows;
+  }
 
- // Get a negotiation by its ID
+  // Get all negotiations for a specific bid_id
+  async getNegotiationsByBidId(bidId) {
+    const query = 'SELECT * FROM negosiasi WHERE bid_id = $1 ORDER BY created_at DESC';
+    const result = await pool.query(query, [bidId]);
+    return result.rows;
+  }
+
+  // Get a negotiation by its ID
   async getNegotiationById(negoId) {
-    const query = 'SELECT * FROM negosiasi WHERE id = $1';
+    const query = 'SELECT * FROM negosiasi WHERE nego_id = $1';
     const result = await pool.query(query, [negoId]);
     return result.rows[0];
   }
 }
 
-module.exports = new negotiatingService();
+module.exports = new NegotiatingService();
