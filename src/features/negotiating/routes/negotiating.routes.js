@@ -1,16 +1,18 @@
 const express = require('express')
 const router = express.Router()
 const negotiatingController = require('../controllers/negotiating.controller')
+const authMiddleware = require('../../../middleware/auth.middleware')
 
-router.post('/:bidid', negotiatingController.createNegotiation)
+// GET all negotiations (was placeholder, now implemented)
+router.get('/', authMiddleware, negotiatingController.getAllNegotiations)
 
-router.get('/', (req,res) => {
-    res.send('ini adalah semua nego')
-})
+// GET negotiations by bid_id (fixed: param mismatch req.params.id → req.params.bid_id)
+router.get('/:bid_id', authMiddleware, negotiatingController.getNegotiationsByBidId)
 
-router.get('/:bid_id', (req,res) => {
-    const id = req.params.id
-    res.send(`ini adalah semua histori bidding ${id}`)
-})
+// POST create negotiation for a bid
+router.post('/:bid_id', authMiddleware, negotiatingController.createNegotiation)
+
+// DELETE a negotiation
+router.delete('/', authMiddleware, negotiatingController.deleteNegotiation)
 
 module.exports = router
