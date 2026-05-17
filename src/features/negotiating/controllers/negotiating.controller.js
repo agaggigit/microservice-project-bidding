@@ -140,6 +140,30 @@ class NegotiatingController {
       return responseError(res, 'Internal server error', 500, 'SERVER_ERROR');
     }
   }
+
+  async acceptNegotiation(req, res) {
+    userId = req.user.id; 
+    userType = req.user.type;
+
+    if (userType !== 'mitra') {
+      return responseError(res, 'Only Mitra can accept negotiations', 403, 'FORBIDDEN');
+    }
+
+    const { nego_id } = req.body;
+
+    if (!nego_id) {
+      return responseError(res, 'Missing required field: nego_id', 400, 'VALIDATION_ERROR');
+    }
+    
+    try {
+      const acceptedNegotiation = await negotiatingService.acceptNegotiation(nego_id);
+      return responseSuccess(res, 'Negotiation accepted successfully', { nego_id: acceptedNegotiation.nego_id }, 200);
+    }
+    catch (error) {
+      console.error('Error in acceptNegotiation:', error);
+      return responseError(res, 'Internal server error', 500, 'SERVER_ERROR');
+    }
+  }
 }
 
 module.exports = new NegotiatingController();

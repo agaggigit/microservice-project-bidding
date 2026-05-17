@@ -80,6 +80,29 @@ class NegotiatingService {
     const result = await pool.query(query, [negoId]);
     return result.rows[0];
   }
-}
 
+  // Accept a negotiation (role must be mitra)
+  async acceptNegotiation(negoId) {
+    const negotiation = await this.getNegotiationById(negoId);
+    
+    if (!negotiation) {
+      throw new Error('Negotiation not found');
+    }
+    
+    const bidDetails = await this.getBidDetails(negotiation.bid_id);
+    
+    if (!bidDetails) {
+      throw new Error('Associated bid not found');
+    }
+
+    const proyekId = bidDetails.proyek_id;
+    const bidId = bidDetails.bid_id;
+
+    const query = 'UPDATE proyek SET status_proyek = $1 WHERE proyek_id = $2 RETURNING *; UPDATE bid SET status_bid = $3 WHERE bid_id = $4 RETURNING *; UPDATE bid SET status_bid = $5 WHERE proyek_id = $2 AND bid_id != $4  RETURNING *';
+    
+    const result = await pool.query(query, ['Closed', proyekId, 'Accepted', bidId, 'Rejected']);
+    
+    return result.rows[0];
+  }
+}
 module.exports = new NegotiatingService();
