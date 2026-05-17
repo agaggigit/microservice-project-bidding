@@ -48,23 +48,86 @@ class BiddingService {
     return this.createBidWithTransactionLock(bidData);
   }
 
-  // Get bid by ID for update (with lock)
-  async getBidByIdForUpdate(bidId) {
-    const query = 'SELECT * FROM bid WHERE bid_id = $1';
+  // Method baru untuk cek eksistensi tanpa ngambil semua kolom
+  async checkBidExists(bidId) {
+    const query = 'SELECT proyek_id, kelompok_id, status_bid FROM bid WHERE bid_id = $1';
     const result = await pool.query(query, [bidId]);
     return result.rows[0];
   }
 
-  // Update bid status (accept/reject)
-  async updateBidStatus(bidId, status, notes = null) {
-    const query = `
-      UPDATE bid 
-      SET status_bid = $1
-      WHERE bid_id = $2
-      RETURNING *
-    `;
-    const result = await pool.query(query, [status, bidId]);
-    return result.rows[0];
+  // Method baru dengan mekanisme Transaction Lock untuk mencegah Race Condition
+  async updateBidStatus(bidId, status) {
+    // Jika statusnya DITOLAK (Rejected), kita tidak perlu repot-repot mengecek kuota
+    // Langsung eksekusi update biasa tanpa transaction lock untuk menghemat memori.
+    if (status !== 'Accepted') {
+      const query = 'UPDATE bid SET status_bid = $1 WHERE bid_id = $2 RETURNING *';
+      const result = await pool.query(query, [status, bidId]);
+      return result.rows[0];
+    }
+
+    // --- MULAI AREA KRITIS (Hanya untuk Accepted) ---
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN'); // 1. Mulai Transaksi
+
+      // Cari tahu bid ini untuk proyek yang mana
+      const getBidQuery = 'SELECT proyek_id FROM bid WHERE bid_id = $1';
+      const bidResult = await client.query(getBidQuery, [bidId]);
+      if (bidResult.rows.length === 0) throw new Error('Bid tidak ditemukan');
+      const projectId = bidResult.rows[0].proyek_id;
+
+      // 2. KUNCI PROYEK (THE MAGIC HAPPENS HERE)
+      // Klausa "FOR UPDATE" akan menahan request lain yang mencoba membaca baris proyek ini 
+      // sampai transaksi kita diakhiri dengan COMMIT atau ROLLBACK.
+      const projectQuery = 'SELECT kuota_maksimal FROM proyek WHERE proyek_id = $1 FOR UPDATE';
+      const projectResult = await client.query(projectQuery, [projectId]);
+      const maxQuota = projectResult.rows[0].kuota_maksimal;
+
+      // 3. HITUNG KUOTA YANG SUDAH TERPAKAI
+      // Karena pintu sedang kita kunci, tidak ada request lain yang bisa menambah 
+      // bid 'Accepted' secara diam-diam di belakang kita.
+      const countQuery = `
+        SELECT COUNT(*) as total_accepted 
+        FROM bid 
+        WHERE proyek_id = $1 AND status_bid = 'Accepted'
+      `;
+      const countResult = await client.query(countQuery, [projectId]);
+      const currentAccepted = parseInt(countResult.rows[0].total_accepted, 10);
+
+      // 4. VALIDASI FINAL
+      if (currentAccepted >= maxQuota) {
+        // Jika ternyata sudah penuh (misal kuota 1, dan barusan diisi orang lain),
+        // gagalkan proses ini dengan melempar error.
+        throw new Error('Gagal: Kuota proyek sudah penuh, tidak bisa menerima bid lagi.');
+      }
+
+      // 5. EKSEKUSI UPDATE STATUS BID
+      const updateBidQuery = `
+        UPDATE bid 
+        SET status_bid = $1 
+        WHERE bid_id = $2 
+        RETURNING *
+      `;
+      const updatedBid = await client.query(updateBidQuery, [status, bidId]);
+
+      // 6. UPDATE STATUS PROYEK JIKA KUOTA SEKARANG PENUH
+      if (currentAccepted + 1 >= maxQuota) {
+        await client.query(
+          "UPDATE proyek SET status_proyek = 'Full' WHERE proyek_id = $1", 
+          [projectId]
+        );
+      }
+
+      await client.query('COMMIT'); // 7. Simpan semua perubahan dan buka kembali kuncinya
+      return updatedBid.rows[0];
+
+    } catch (error) {
+      await client.query('ROLLBACK'); // Jika ada error di tengah jalan, batalkan semua perubahan!
+      throw error;
+    } finally {
+      client.release(); // Jangan lupa kembalikan koneksi ke pool agar tidak memory leak
+    }
   }
 
   // Update project status to 'Full' if quota is reached

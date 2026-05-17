@@ -67,13 +67,6 @@ class NegotiatingService {
     return result.rows;
   }
 
-  // Get all negotiations for a specific bid_id
-  async getNegotiationsByBidId(bidId) {
-    const query = 'SELECT * FROM negosiasi WHERE bid_id = $1 ORDER BY created_at DESC';
-    const result = await pool.query(query, [bidId]);
-    return result.rows;
-  }
-
   // Get a negotiation by its ID
   async getNegotiationById(negoId) {
     const query = 'SELECT * FROM negosiasi WHERE nego_id = $1';
@@ -93,15 +86,32 @@ class NegotiatingService {
     return result.rows[0];
   }
 
-  // Update bid status final (when deal is accepted)
-  async updateBidStatusFinal(bidId, status) {
-    const query = `
-      UPDATE bid 
-      SET status_bid = $1
-      WHERE bid_id = $2
-      RETURNING *
-    `;
-    const result = await pool.query(query, [status, bidId]);
+  // Update bid status final & sinkronisasi harga/waktu deal
+  async updateBidStatusFinal(bidId, status, finalHarga = null, finalWaktu = null) {
+    let query;
+    let params;
+
+    // Jika deal (Accepted) dan ada nominal/waktu baru, update semuanya
+    if (status === 'Accepted' && finalHarga !== null && finalWaktu !== null) {
+      query = `
+        UPDATE bid 
+        SET status_bid = $1, tawaran_harga = $2, tawaran_waktu = $3
+        WHERE bid_id = $4
+        RETURNING *
+      `;
+      params = [status, finalHarga, finalWaktu, bidId];
+    } else {
+      // Jika hanya merubah status (misal: ditolak/Rejected)
+      query = `
+        UPDATE bid 
+        SET status_bid = $1
+        WHERE bid_id = $2
+        RETURNING *
+      `;
+      params = [status, bidId];
+    }
+
+    const result = await pool.query(query, params);
     return result.rows[0];
   }
 

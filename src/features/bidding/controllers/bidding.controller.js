@@ -49,11 +49,21 @@ class BiddingController {
 
   async createBid(req, res) {
     try {
-      const { group_id, project_id, priority, document_url, student_id, tawaran_harga, tawaran_waktu } = req.body;
+      // --- PERUBAHAN 1: RBAC Lapis 1 (Cek Role) ---
+      // Tolak mentah-mentah jika yang request bukan talent
+      if (req.user.type !== 'talent') {
+        return responseError(res, 'Hanya talent/kelompok yang bisa melakukan bid', 403, 'FORBIDDEN');
+      }
 
-      // Validation: Check required fields
-      if (!group_id || !project_id || !priority || !document_url || !student_id || !tawaran_harga || !tawaran_waktu) {
-        return responseError(res, 'Missing required fields: group_id, project_id, priority, document_url, student_id, tawaran_harga, tawaran_waktu', 400, 'VALIDATION_ERROR');
+      // --- PERUBAHAN 2: Hapus group_id dari destructuring req.body ---
+      const { project_id, priority, document_url, student_id, tawaran_harga, tawaran_waktu } = req.body;
+
+      // --- PERUBAHAN 3: Paksa group_id pakai ID dari token auth ---
+      const group_id = req.user.id;
+
+      // Validation: Check required fields (group_id sudah pasti ada dari token, jadi tidak perlu dicek lagi di sini)
+      if (!project_id || !priority || !document_url || !student_id || !tawaran_harga || !tawaran_waktu) {
+        return responseError(res, 'Missing required fields: project_id, priority, document_url, student_id, tawaran_harga, tawaran_waktu', 400, 'VALIDATION_ERROR');
       }
 
       // Validation: Priority must be positive integer
@@ -93,12 +103,12 @@ class BiddingController {
       // Create bid with market maker logic
       const bidData = {
         projectId: project_id,
-        groupId: group_id,
+        groupId: group_id, // Aman! Menggunakan ID dari token
         studentId: student_id,
         priority: priority,
         documentUrl: document_url,
-        tawaranHarga: tawaran_harga, // Tambahan baru
-        tawaranWaktu: tawaran_waktu  // Tambahan baru
+        tawaranHarga: tawaran_harga, 
+        tawaranWaktu: tawaran_waktu  
       };
 
       const newBid = await biddingService.createBid(bidData);
@@ -129,7 +139,7 @@ class BiddingController {
   async updateBidStatus(req, res) {
     try {
       const { id } = req.params;
-      const { status, notes } = req.body;
+      const { status } = req.body; // 👈 Notes dihapus dari sini
       const userId = req.user.id;
       const userType = req.user.type;
 
@@ -138,8 +148,8 @@ class BiddingController {
         return responseError(res, 'Status harus Accepted atau Rejected', 400, 'INVALID_STATUS');
       }
 
-      // Get bid dengan lock
-      const bid = await biddingService.getBidByIdForUpdate(id);
+      // Get bid untuk validasi (menggunakan method yang sudah di-rename)
+      const bid = await biddingService.checkBidExists(id);
       if (!bid) {
         return responseError(res, 'Bid tidak ditemukan', 404, 'BID_NOT_FOUND');
       }
@@ -152,10 +162,10 @@ class BiddingController {
         return responseError(res, 'Hanya mitra pemilik proyek yang bisa mengubah status bid', 403, 'FORBIDDEN');
       }
 
-      // Update bid status
-      const updated = await biddingService.updateBidStatus(id, status, notes);
+      // Update bid status (tanpa notes)
+      const updated = await biddingService.updateBidStatus(id, status); // 👈 Notes dihapus
       
-      // Trigger notification (via Kelompok 5)
+      // Trigger notification
       await notificationService.sendBidStatusUpdate(bid.kelompok_id, status, project.judul_proyek);
 
       return responseSuccess(res, `Bid berhasil di-${status.toLowerCase()}`, {
