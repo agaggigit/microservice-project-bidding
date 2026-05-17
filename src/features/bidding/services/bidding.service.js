@@ -45,34 +45,25 @@ class BiddingService {
 
   // Create a new bid with market maker logic
   async createBid(bidData) {
-    const { projectId, groupId, studentId, priority, documentUrl, tawaranHarga, tawaranWaktu } = bidData;
+    return this.createBidWithTransactionLock(bidData);
+  }
 
-    // Determine bid status based on project quota
-    const currentBids = await this.countProjectBids(projectId);
-    const project = await this.getProjectDetails(projectId);
-    
-    let bidStatus = 'Queued';
-    if (currentBids >= project.kuota_maksimal) {
-      bidStatus = 'Rejected';
-    }
+  // Get bid by ID for update (with lock)
+  async getBidByIdForUpdate(bidId) {
+    const query = 'SELECT * FROM bid WHERE bid_id = $1';
+    const result = await pool.query(query, [bidId]);
+    return result.rows[0];
+  }
 
+  // Update bid status (accept/reject)
+  async updateBidStatus(bidId, status, notes = null) {
     const query = `
-      INSERT INTO bid (proyek_id, kelompok_id, pendaftar_id, status_bid, urutan_prioritas, dokumen_url, tawaran_harga, tawaran_waktu)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      UPDATE bid 
+      SET status_bid = $1
+      WHERE bid_id = $2
       RETURNING *
     `;
-
-    const result = await pool.query(query, [
-      projectId,
-      groupId,
-      studentId,
-      bidStatus,
-      priority,
-      documentUrl,
-      tawaranHarga, // Ini untuk $7
-      tawaranWaktu  // Ini untuk $8
-    ]);
-
+    const result = await pool.query(query, [status, bidId]);
     return result.rows[0];
   }
 
@@ -186,6 +177,78 @@ class BiddingService {
     } catch (error) {
       console.error('Error in getBids:', error);
       throw error;
+    }
+  }
+
+  async createBidWithTransactionLock(bidData) {
+    const client = await pool.connect();
+    try {
+      // Start transaction
+      await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+      
+      // Lock project row untuk prevent concurrent updates
+      await client.query(
+        'SELECT * FROM proyek WHERE proyek_id = $1 FOR UPDATE',
+        [bidData.projectId]
+      );
+      
+      // Re-check quota after acquiring lock
+      const countQuery = `
+        SELECT COUNT(*) as total 
+        FROM bid 
+        WHERE proyek_id = $1 AND status_bid IN ('Accepted', 'Pending')
+      `;
+      const countResult = await client.query(countQuery, [bidData.projectId]);
+      const currentBids = parseInt(countResult.rows[0].total, 10);
+      
+      // Get project details
+      const projectQuery = 'SELECT * FROM proyek WHERE proyek_id = $1';
+      const projectResult = await client.query(projectQuery, [bidData.projectId]);
+      const project = projectResult.rows[0];
+      
+      // Determine bid status based on quota
+      let bidStatus = 'Queued';
+      if (currentBids >= project.kuota_maksimal) {
+        bidStatus = 'Rejected';
+      }
+      
+      // Insert new bid
+      const insertQuery = `
+        INSERT INTO bid (proyek_id, kelompok_id, pendaftar_id, status_bid, urutan_prioritas, dokumen_url, tawaran_harga, tawaran_waktu)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *
+      `;
+      
+      const insertResult = await client.query(insertQuery, [
+        bidData.projectId,
+        bidData.groupId,
+        bidData.studentId,
+        bidStatus,
+        bidData.priority,
+        bidData.documentUrl,
+        bidData.tawaranHarga,
+        bidData.tawaranWaktu
+      ]);
+      
+      // Update project status if full
+      if (currentBids + 1 >= project.kuota_maksimal && project.status_proyek !== 'Full') {
+        await client.query(
+          'UPDATE proyek SET status_proyek = $1 WHERE proyek_id = $2',
+          ['Full', bidData.projectId]
+        );
+      }
+      
+      // Commit transaction
+      await client.query('COMMIT');
+      
+      return insertResult.rows[0];
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error in createBidWithTransactionLock:', error);
+      throw error;
+    } finally {
+      client.release();
     }
   }
 }

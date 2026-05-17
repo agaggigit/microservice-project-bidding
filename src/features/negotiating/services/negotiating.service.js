@@ -80,6 +80,59 @@ class NegotiatingService {
     const result = await pool.query(query, [negoId]);
     return result.rows[0];
   }
+
+  // Update negotiation status (accept/reject counter-offer)
+  async updateNegotiationStatus(negoId, status) {
+    const query = `
+      UPDATE negosiasi 
+      SET status = $1
+      WHERE nego_id = $2
+      RETURNING *
+    `;
+    const result = await pool.query(query, [status, negoId]);
+    return result.rows[0];
+  }
+
+  // Update bid status final (when deal is accepted)
+  async updateBidStatusFinal(bidId, status) {
+    const query = `
+      UPDATE bid 
+      SET status_bid = $1
+      WHERE bid_id = $2
+      RETURNING *
+    `;
+    const result = await pool.query(query, [status, bidId]);
+    return result.rows[0];
+  }
+
+  // Get project details (for RBAC check)
+  async getProjectDetails(projectId) {
+    const query = 'SELECT * FROM proyek WHERE proyek_id = $1';
+    const result = await pool.query(query, [projectId]);
+    return result.rows[0];
+  }
+
+  async getNegotiationsByBidId(bidId) {
+    try {
+      const query = `
+        SELECT 
+          nego_id,
+          bid_id,
+          response_harga,
+          response_waktu,
+          role_,
+          created_at
+        FROM negosiasi
+        WHERE bid_id = $1
+        ORDER BY created_at DESC
+      `;
+      const result = await pool.query(query, [bidId]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching negotiations:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new NegotiatingService();

@@ -16,7 +16,7 @@ CREATE TABLE proyek (
     mitra_id INT NOT NULL,
     judul_proyek VARCHAR(255) NOT NULL,
     deskripsi_proyek TEXT NOT NULL,
-    requirements TEXT,
+    requirements TEXT,          -- berupa opsi gitu
     kuota_maksimal INT NOT NULL DEFAULT 1,
     budget_awal DECIMAL(15, 2) NOT NULL,
     tanggal_selesai DATE, 

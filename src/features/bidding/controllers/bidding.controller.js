@@ -1,4 +1,5 @@
 const biddingService = require('../services/bidding.service');
+const notificationService = require('../../../utils/notification');
 const { responseSuccess, responseError } = require('../../../utils/response');
 
 class BiddingController {
@@ -122,6 +123,50 @@ class BiddingController {
     } catch (error) {
       console.error('Error in createBid:', error);
       return responseError(res, 'Internal server error', 500, 'SERVER_ERROR');
+    }
+  }
+
+  async updateBidStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status, notes } = req.body;
+      const userId = req.user.id;
+      const userType = req.user.type;
+
+      // Validasi
+      if (!status || !['Accepted', 'Rejected'].includes(status)) {
+        return responseError(res, 'Status harus Accepted atau Rejected', 400, 'INVALID_STATUS');
+      }
+
+      // Get bid dengan lock
+      const bid = await biddingService.getBidByIdForUpdate(id);
+      if (!bid) {
+        return responseError(res, 'Bid tidak ditemukan', 404, 'BID_NOT_FOUND');
+      }
+
+      // Get project untuk RBAC check
+      const project = await biddingService.getProjectDetails(bid.proyek_id);
+      
+      // RBAC: hanya mitra pemilik yang bisa accept/reject
+      if (userType !== 'mitra' || project.mitra_id !== userId) {
+        return responseError(res, 'Hanya mitra pemilik proyek yang bisa mengubah status bid', 403, 'FORBIDDEN');
+      }
+
+      // Update bid status
+      const updated = await biddingService.updateBidStatus(id, status, notes);
+      
+      // Trigger notification (via Kelompok 5)
+      await notificationService.sendBidStatusUpdate(bid.kelompok_id, status, project.judul_proyek);
+
+      return responseSuccess(res, `Bid berhasil di-${status.toLowerCase()}`, {
+        bid_id: updated.bid_id,
+        status: updated.status_bid,
+        updated_at: new Date()
+      }, 200);
+
+    } catch (error) {
+      console.error('Error in updateBidStatus:', error);
+      return responseError(res, error.message, 500, 'SERVER_ERROR');
     }
   }
 }

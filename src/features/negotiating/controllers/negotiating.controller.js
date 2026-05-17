@@ -1,4 +1,5 @@
 const negotiatingService = require('../services/negotiating.service');
+const notificationService = require('../../../utils/notification');
 const { getDigitCount } = require('../../../helper_function/functions');
 const { responseSuccess, responseError } = require('../../../utils/response');
 
@@ -138,6 +139,69 @@ class NegotiatingController {
       }
 
       return responseError(res, 'Internal server error', 500, 'SERVER_ERROR');
+    }
+  }
+
+  async updateNegotiationStatus(req, res) {
+    try {
+      const { nego_id } = req.params;
+      const { status } = req.body;  // 'Accepted' atau 'Rejected'
+      const userId = req.user.id;
+      const userType = req.user.type;
+
+      // Validasi
+      if (!status || !['Accepted', 'Rejected'].includes(status)) {
+        return responseError(res, 'Status harus Accepted atau Rejected', 400, 'INVALID_STATUS');
+      }
+
+      // Get negotiation
+      const nego = await negotiatingService.getNegotiationById(nego_id);
+      if (!nego) {
+        return responseError(res, 'Negotiation tidak ditemukan', 404, 'NEGO_NOT_FOUND');
+      }
+
+      // Get bid
+      const bid = await negotiatingService.getBidDetails(nego.bid_id);
+      if (!bid) {
+        return responseError(res, 'Bid tidak ditemukan', 404, 'BID_NOT_FOUND');
+      }
+
+      // Get project
+      const project = await negotiatingService.getProjectDetails(bid.proyek_id);
+
+      // RBAC: Mitra hanya bisa accept nego dari proyek mereka
+      // Talent hanya bisa accept nego untuk bid mereka
+      if (userType === 'mitra') {
+        if (project.mitra_id !== userId) {
+          return responseError(res, 'Unauthorized untuk proyek ini', 403, 'FORBIDDEN');
+        }
+      } else if (userType === 'talent') {
+        if (bid.kelompok_id !== userId) {
+          return responseError(res, 'Unauthorized untuk bid ini', 403, 'FORBIDDEN');
+        }
+      }
+
+      // Update negotiation status
+      const updated = await negotiatingService.updateNegotiationStatus(nego_id, status);
+
+      // If accepted & responder is mitra: finalize bid as Accepted
+      if (status === 'Accepted' && nego.role_ === 'Mitra') {
+        await negotiatingService.updateBidStatusFinal(bid.bid_id, 'Accepted');
+        
+        // Trigger notification to talent
+        await notificationService.sendDealConfirmed(bid.kelompok_id, project.judul_proyek);
+      }
+
+      return responseSuccess(res, `Negotiation berhasil di-${status.toLowerCase()}`, {
+        nego_id: updated.nego_id,
+        status: updated.status || 'Accepted',
+        bid_id: bid.bid_id,
+        finalized: status === 'Accepted'
+      }, 200);
+
+    } catch (error) {
+      console.error('Error in updateNegotiationStatus:', error);
+      return responseError(res, error.message, 500, 'SERVER_ERROR');
     }
   }
 }

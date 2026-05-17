@@ -15,4 +15,7 @@ router.post('/:bid_id', authMiddleware, negotiatingController.createNegotiation)
 // DELETE a negotiation
 router.delete('/', authMiddleware, negotiatingController.deleteNegotiation)
 
+// PUT update negotiation status (e.g., Accept/Reject)
+router.put('/:nego_id/status', authMiddleware, negotiatingController.updateNegotiationStatus)
+
 module.exports = router

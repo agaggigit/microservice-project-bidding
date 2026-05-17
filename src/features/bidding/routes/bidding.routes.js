@@ -13,4 +13,7 @@ router.get('/:id', authMiddleware, biddingController.getBidById)
 // POST create a new bid
 router.post('/', authMiddleware, biddingController.createBid)
 
+// PUT update bid status (e.g., Accept/Reject)
+router.put('/:id/status', authMiddleware, biddingController.updateBidStatus)
+
 module.exports = router
