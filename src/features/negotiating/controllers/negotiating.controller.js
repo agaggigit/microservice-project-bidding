@@ -1,5 +1,6 @@
 const negotiatingService = require('../services/negotiating.service');
 const notificationService = require('../../../utils/notification');
+const trackerService = require('../../../utils/tracker');
 const { getDigitCount } = require('../../../helper_function/functions');
 const { responseSuccess, responseError } = require('../../../utils/response');
 
@@ -223,6 +224,26 @@ class NegotiatingController {
         // Trigger notification ke pihak lawan
         const targetId = userType === 'mitra' ? bid.kelompok_id : project.mitra_id;
         await notificationService.sendDealConfirmed(targetId, project.judul_proyek);
+
+        // 👈 PERUBAHAN 2: TRIGGER TRACKER (Kelompok 4)
+        const dealData = {
+          deal_id: `DEAL-${bid.proyek_id}-${bid.kelompok_id}`,
+          project_id: bid.proyek_id,
+          project_title: project.judul_proyek,
+          mitra_id: project.mitra_id,
+          group_id: bid.kelompok_id,
+          bid_amount: bid.tawaran_harga,       // Harga histori awal
+          deal_amount: nego.response_harga,    // Harga final hasil negosiasi
+          status: 'Accepted',
+          timeline: {
+            bid_created_at: bid.waktu_bid,
+            bid_accepted_at: new Date().toISOString(),
+            estimated_completion: nego.response_waktu // Waktu final hasil negosiasi
+          }
+        };
+
+        // Lempar datanya ke Kelompok 4
+        await trackerService.sendDealToTracker(dealData);
       } 
       else if (status === 'Rejected') {
         // Sesuai flow, jika ditolak maka bid tersebut gagal (gugur)
