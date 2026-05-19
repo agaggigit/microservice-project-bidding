@@ -50,7 +50,7 @@ class BiddingService {
 
   // Method baru untuk cek eksistensi tanpa ngambil semua kolom
   async checkBidExists(bidId) {
-    const query = 'SELECT proyek_id, kelompok_id, status_bid FROM bid WHERE bid_id = $1';
+    const query = 'SELECT * FROM bid WHERE bid_id = $1';
     const result = await pool.query(query, [bidId]);
     return result.rows[0];
   }
@@ -176,15 +176,16 @@ class BiddingService {
   }
 
   // Get bids with role-based filtering
-  // Mitra: hanya lihat bid untuk proyek miliknya
+  // Client: hanya lihat bid untuk proyek miliknya
   // Talent: hanya lihat bid yang mereka submit
+  // Admin: lihat semua bid
   async getBids(userId, userType) {
     try {
       let query;
       let params;
 
-      if (userType === 'mitra') {
-        // Mitra hanya lihat bid dari proyek miliknya
+      if (userType === 'client') {
+        // Client hanya lihat bid dari proyek miliknya
         // JOIN dengan proyek table untuk filter berdasarkan mitra_id
         query = `
           SELECT 
@@ -229,6 +230,27 @@ class BiddingService {
           ORDER BY b.waktu_bid DESC
         `;
         params = [userId];
+
+      } else if (userType === 'admin') {
+        query = `
+          SELECT 
+            b.bid_id,
+            b.proyek_id,
+            b.kelompok_id,
+            b.pendaftar_id,
+            b.status_bid,
+            b.urutan_prioritas,
+            b.dokumen_url,
+            b.waktu_bid,
+            p.judul_proyek,
+            p.status_proyek,
+            m.nama_mitra
+          FROM bid b
+          JOIN proyek p ON b.proyek_id = p.proyek_id
+          JOIN mitra m ON p.mitra_id = m.mitra_id
+          ORDER BY b.waktu_bid DESC
+        `;
+        params = [];
 
       } else {
         throw new Error(`Invalid user type: ${userType}`);

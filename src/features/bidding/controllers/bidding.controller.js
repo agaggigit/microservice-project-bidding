@@ -3,6 +3,10 @@ const notificationService = require('../../../utils/notification');
 const trackerService = require('../../../utils/tracker');
 const { responseSuccess, responseError } = require('../../../utils/response');
 
+const isProjectOwner = (project, userId) => (
+  String(project.mitra_id) === String(userId)
+);
+
 class BiddingController {
   async getBids(req, res) {
     try {
@@ -158,9 +162,9 @@ class BiddingController {
       // Get project untuk RBAC check
       const project = await biddingService.getProjectDetails(bid.proyek_id);
       
-      // RBAC: hanya mitra pemilik yang bisa accept/reject
-      if (userType !== 'mitra' || project.mitra_id !== userId) {
-        return responseError(res, 'Hanya mitra pemilik proyek yang bisa mengubah status bid', 403, 'FORBIDDEN');
+      // RBAC: hanya client pemilik atau admin yang bisa accept/reject
+      if (userType !== 'admin' && (userType !== 'client' || !isProjectOwner(project, userId))) {
+        return responseError(res, 'Hanya client pemilik proyek atau admin yang bisa mengubah status bid', 403, 'FORBIDDEN');
       }
 
       // Update bid status (tanpa notes)
@@ -205,4 +209,3 @@ class BiddingController {
 }
 
 module.exports = new BiddingController();
-

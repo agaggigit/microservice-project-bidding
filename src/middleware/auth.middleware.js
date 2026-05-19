@@ -7,8 +7,8 @@
  * 3. Attach info ke req.user untuk digunakan di controller/service
  * 
  * Expected Headers:
- * - X-User-ID: ID dari user (mahasiswa_id atau mitra_id)
- * - X-User-Type: Tipe user ('talent' atau 'mitra')
+ * - X-User-ID: ID dari user (mahasiswa_id, mitra_id/client_id, atau admin_id)
+ * - X-User-Type: Tipe user ('talent', 'client', atau 'admin')
  */
 
 const authMiddleware = (req, res, next) => {
@@ -26,12 +26,12 @@ const authMiddleware = (req, res, next) => {
       });
     }
 
-    // Validasi: user_type harus talent atau mitra
-    const validUserTypes = ['talent', 'mitra'];
+    // Validasi: user_type harus talent, client, atau admin
+    const validUserTypes = ['talent', 'client', 'admin'];
     if (!validUserTypes.includes(userType.toLowerCase())) {
       return res.status(400).json({    // 400 = Bad Request
         success: false,
-        message: 'Invalid X-User-Type. Must be "talent" or "mitra"',
+        message: 'Invalid X-User-Type. Must be "talent", "client", or "admin"',
         code: 'INVALID_USER_TYPE'
       });
     }

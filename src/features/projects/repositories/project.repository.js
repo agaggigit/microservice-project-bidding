@@ -6,12 +6,13 @@ const create = async (projectData) => {
       mitra_id,
       judul_proyek,
       deskripsi_proyek,
+      skills,
       requirements,
       kuota_maksimal,
       status_proyek,
       budget_awal
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    VALUES ($1, $2, $3, $4::project_skill_enum[], $5, $6, $7, $8)
     RETURNING *
   `
 
@@ -19,6 +20,7 @@ const create = async (projectData) => {
     projectData.mitra_id,
     projectData.judul_proyek,
     projectData.deskripsi_proyek,
+    projectData.skills,
     projectData.requirements,
     projectData.kuota_maksimal,
     projectData.status_proyek,
@@ -57,19 +59,23 @@ const update = async (id, projectData) => {
     SET
       judul_proyek = $1,
       deskripsi_proyek = $2,
-      requirements = $3,
-      kuota_maksimal = $4,
-      status_proyek = $5
-    WHERE proyek_id = $6
+      skills = $3::project_skill_enum[],
+      requirements = $4,
+      kuota_maksimal = $5,
+      status_proyek = $6,
+      budget_awal = $7
+    WHERE proyek_id = $8
     RETURNING *
   `
 
   const values = [
     projectData.judul_proyek,
     projectData.deskripsi_proyek,
+    projectData.skills,
     projectData.requirements,
     projectData.kuota_maksimal,
     projectData.status_proyek,
+    projectData.budget_awal,
     id
   ]
 

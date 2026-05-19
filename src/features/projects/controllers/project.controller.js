@@ -1,5 +1,9 @@
 const projectService = require('../services/project.service')
 
+const isProjectOwner = (project, userId) => (
+  String(project.mitra_id) === String(userId)
+)
+
 const sendErrorResponse = (res, error) => {
   if (error.statusCode === 400) {
     return res.status(400).json({
@@ -29,12 +33,12 @@ const sendErrorResponse = (res, error) => {
 
 const createProject = async (req, res) => {
   try {
-    // RBAC Lapis 1: Hanya role 'mitra' yang boleh membuat proyek
-    if (req.user.type !== 'mitra') {
-      return res.status(403).json({ message: 'Forbidden: Hanya Mitra yang dapat membuat proyek' })
+    // RBAC Lapis 1: Hanya role 'client' yang boleh membuat proyek
+    if (req.user.type !== 'client') {
+      return res.status(403).json({ message: 'Forbidden: Hanya client yang dapat membuat proyek' })
     }
 
-    // SECURITY PATCH: Paksa mitra_id menggunakan ID dari token auth
+    // SECURITY PATCH: Paksa mitra_id menggunakan ID dari auth client
     // Jangan pernah percaya mitra_id dari input user (req.body)
     const payload = {
       ...req.body,
@@ -108,15 +112,15 @@ const getProjectById = async (req, res) => {
 const updateProject = async (req, res) => {
   try {
     // RBAC Lapis 1: Cek tipe user
-    if (req.user.type !== 'mitra') {
-      return res.status(403).json({ message: 'Forbidden: Hanya Mitra yang dapat mengupdate proyek' })
+    if (!['client', 'admin'].includes(req.user.type)) {
+      return res.status(403).json({ message: 'Forbidden: Hanya client atau admin yang dapat mengupdate proyek' })
     }
 
     // Dapatkan data proyek saat ini untuk mengecek kepemilikan
     const currentProject = await projectService.getProjectById(req.params.id)
 
-    // RBAC Lapis 2: Cek apakah mitra ini adalah pemilik sah dari proyek tersebut
-    if (currentProject.mitra_id !== req.user.id) {
+    // RBAC Lapis 2: Cek apakah client ini adalah pemilik sah dari proyek tersebut
+    if (req.user.type === 'client' && !isProjectOwner(currentProject, req.user.id)) {
       return res.status(403).json({ message: 'Forbidden: Anda tidak memiliki akses untuk mengubah proyek ini' })
     }
 
@@ -135,15 +139,15 @@ const updateProject = async (req, res) => {
 const deleteProject = async (req, res) => {
   try {
     // RBAC Lapis 1: Cek tipe user
-    if (req.user.type !== 'mitra') {
-      return res.status(403).json({ message: 'Forbidden: Hanya Mitra yang dapat menghapus proyek' })
+    if (!['client', 'admin'].includes(req.user.type)) {
+      return res.status(403).json({ message: 'Forbidden: Hanya client atau admin yang dapat menghapus proyek' })
     }
 
     // Dapatkan data proyek saat ini untuk mengecek kepemilikan
     const currentProject = await projectService.getProjectById(req.params.id)
 
     // RBAC Lapis 2: Cek kepemilikan
-    if (currentProject.mitra_id !== req.user.id) {
+    if (req.user.type === 'client' && !isProjectOwner(currentProject, req.user.id)) {
       return res.status(403).json({ message: 'Forbidden: Anda tidak memiliki akses untuk menghapus proyek ini' })
     }
 
