@@ -1,23 +1,21 @@
-const axios = require('axios');
+const { publishMessage } = require('./rabbitmq');
 
 const sendDealToTracker = async (dealData) => {
   try {
-    const response = await axios.post(
-      `${process.env.TRACKER_SERVICE_URL}/api/tracker/deals/record`,
-      dealData,
-      {
-        headers: {
-          'X-Service-Auth': process.env.SERVICE_AUTH_TOKEN,
-          'Content-Type': 'application/json'
-        },
-        timeout: 5000 // Batas maksimal 5 detik agar tidak membebani server kita
-      }
-    );
+    // Tentukan nama antrean untuk Kelompok 4
+    const queueName = 'tracker_deals_queue';
     
-    console.log('[TRACKER INTEGRATION] Deal recorded successfully:', response.data);
-    return response.data;
+    // Titipkan data deal ke antrean RabbitMQ
+    const success = await publishMessage(queueName, dealData);
+    
+    if (success) {
+      console.log('[TRACKER INTEGRATION] Deal queued in RabbitMQ successfully');
+      return { success: true, message: 'Deal queued successfully' };
+    } else {
+      throw new Error('Failed to publish message to queue');
+    }
   } catch (error) {
-    console.warn('[TRACKER INTEGRATION] Warning - Failed to record deal:', error.message);
+    console.warn('[TRACKER INTEGRATION] Warning - Failed to queue deal:', error.message);
     return { success: false, error: error.message };
   }
 };
