@@ -40,7 +40,7 @@ class NegotiatingService {
       throw new Error('Negotiation not found for this bid');
     }
 
-    const oppositeRole = negoToDelete.role_ === 'Kelompok' ? 'Mitra' : 'Kelompok';
+    const oppositeRole = negoToDelete.role_ === 'talent' ? 'client' : 'talent';
     const hasOppositeRole = negotiations.some(nego => nego.role_ === oppositeRole);
 
     if (hasOppositeRole) {

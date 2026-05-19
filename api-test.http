@@ -14,7 +14,7 @@ GET http://localhost:3000/api/projects?search=React
 ### Filter Proyek by Status dan Budget
 GET http://localhost:3000/api/projects?status=Open&budget_min=4000000&budget_max=10000000
 
-### Dashboard Mitra: Lihat Proyek Milik Sendiri
+### Dashboard Client: Lihat Proyek Milik Sendiri
 GET http://localhost:3000/api/projects?mitra_id=1
 
 ### Lihat Detail Proyek (public)
@@ -24,11 +24,12 @@ GET http://localhost:3000/api/projects/1
 POST http://localhost:3000/api/projects
 Content-Type: application/json
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 {
   "judul_proyek": "Aplikasi E-Commerce",
   "deskripsi_proyek": "Platform belanja online modern",
+  "skills": ["Frontend", "Backend", "Database"],
   "requirements": "Pengalaman dengan React dan Node.js",
   "mitra_id": 1,
   "kuota_maksimal": 3,
@@ -40,11 +41,12 @@ X-User-Type: mitra
 PUT http://localhost:3000/api/projects/1
 Content-Type: application/json
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 {
   "judul_proyek": "Aplikasi E-Commerce v2",
   "deskripsi_proyek": "Platform belanja online modern (updated)",
+  "skills": ["Frontend", "Backend", "Database"],
   "requirements": "React, Node.js, PostgreSQL",
   "budget_awal": 7500000
 }
@@ -52,7 +54,7 @@ X-User-Type: mitra
 ### Hapus Proyek (requires auth)
 DELETE http://localhost:3000/api/projects/1
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 
 
@@ -77,10 +79,10 @@ X-User-Type: talent
   "tawaran_waktu": "2026-06-20"
 }
 
-### Lihat Semua Bid — sebagai Mitra (otomatis terfilter by proyek miliknya)
+### Lihat Semua Bid — sebagai Client (otomatis terfilter by proyek miliknya)
 GET http://localhost:3000/api/bidding
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 ### Lihat Semua Bid — sebagai Talent (otomatis terfilter by kelompoknya)
 GET http://localhost:3000/api/bidding
@@ -90,14 +92,14 @@ X-User-Type: talent
 ### Lihat Detail Bid by ID
 GET http://localhost:3000/api/bidding/1
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 ### UPDATE STATUS BID (ACCEPT/REJECT) - CRITICAL ENDPOINT WITH DB LOCKING
-### Hanya Mitra pemilik proyek yang bisa akses ini
+### Hanya client pemilik proyek atau admin yang bisa akses ini
 PUT http://localhost:3000/api/bidding/1/status
 Content-Type: application/json
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 {
   "status": "Accepted"
@@ -119,38 +121,36 @@ X-User-Type: talent
 
 {
   "response_harga": 4200000,
-  "response_waktu": "2026-06-25",
-  "role_": "Kelompok"
+  "response_waktu": "2026-06-25"
 }
 
-### Buat Negosiasi — Response dari Mitra
+### Buat Negosiasi — Response dari Client
 POST http://localhost:3000/api/negotiating/1
 Content-Type: application/json
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 {
   "response_harga": 4350000,
-  "response_waktu": "2026-06-22",
-  "role_": "Mitra"
+  "response_waktu": "2026-06-22"
 }
 
 ### Lihat Semua Negosiasi
 GET http://localhost:3000/api/negotiating/
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 ### Lihat Negosiasi per Bid ID
 GET http://localhost:3000/api/negotiating/1
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 ### UPDATE STATUS NEGOSIASI (FINAL DEAL ACCEPT/REJECT)
 ### Endpoint ini otomatis sinkronisasi harga/waktu ke tabel bid jika Accepted
 PUT http://localhost:3000/api/negotiating/1/status
 Content-Type: application/json
 X-User-ID: 1
-X-User-Type: mitra
+X-User-Type: client
 
 {
   "status": "Accepted"

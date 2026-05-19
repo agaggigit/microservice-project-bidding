@@ -1,6 +1,8 @@
 const projectRepository = require('../repositories/project.repository')
-
-const VALID_PROJECT_STATUSES = ['Open', 'Full', 'Closed']
+const {
+  VALID_PROJECT_STATUSES,
+  VALID_PROJECT_SKILLS
+} = require('../../../middleware/projectsValidation')
 
 const createError = (message, statusCode, errors) => {
   const error = new Error(message)
@@ -46,6 +48,35 @@ const getRequiredString = (payload, fieldName, errors) => {
   }
 
   return value.trim()
+}
+
+const getRequiredSkills = (payload, fieldName, errors) => {
+  const value = payload[fieldName]
+
+  if (!Array.isArray(value) || value.length === 0) {
+    errors.push(`${fieldName} must be a non-empty array`)
+    return null
+  }
+
+  const normalizedSkills = value
+    .filter((skill) => typeof skill === 'string')
+    .map((skill) => skill.trim())
+    .filter((skill) => skill !== '')
+
+  if (normalizedSkills.length !== value.length) {
+    errors.push(`${fieldName} must contain only non-empty strings`)
+    return null
+  }
+
+  const uniqueSkills = [...new Set(normalizedSkills)]
+  const invalidSkills = uniqueSkills.filter((skill) => !VALID_PROJECT_SKILLS.includes(skill))
+
+  if (invalidSkills.length > 0) {
+    errors.push(`${fieldName} must be one or more of: ${VALID_PROJECT_SKILLS.join(', ')}`)
+    return null
+  }
+
+  return uniqueSkills
 }
 
 const getOptionalPositiveInteger = (payload, fieldName, errors) => {
@@ -101,6 +132,7 @@ const normalizeCreatePayload = (payload) => {
 
   const judulProyek = getRequiredString(projectPayload, 'judul_proyek', errors)
   const deskripsiProyek = getRequiredString(projectPayload, 'deskripsi_proyek', errors)
+  const skills = getRequiredSkills(projectPayload, 'skills', errors)
   const requirements = getRequiredString(projectPayload, 'requirements', errors)
   const kuotaMaksimal = getOptionalPositiveInteger(projectPayload, 'kuota_maksimal', errors)
   const statusProyek = getOptionalStatus(projectPayload, 'status_proyek', errors)
@@ -118,6 +150,7 @@ const normalizeCreatePayload = (payload) => {
     mitra_id: mitraId,
     judul_proyek: judulProyek,
     deskripsi_proyek: deskripsiProyek,
+    skills,
     requirements,
     kuota_maksimal: kuotaMaksimal || 1,
     status_proyek: statusProyek || 'Open',
@@ -143,6 +176,7 @@ const normalizeUpdatePayload = (payload, currentProject) => {
 
   const judulProyek = getRequiredString(projectPayload, 'judul_proyek', errors)
   const deskripsiProyek = getRequiredString(projectPayload, 'deskripsi_proyek', errors)
+  const skills = getRequiredSkills(projectPayload, 'skills', errors)
   const requirements = getRequiredString(projectPayload, 'requirements', errors)
   const kuotaMaksimal = getOptionalPositiveInteger(projectPayload, 'kuota_maksimal', errors)
   const statusProyek = getOptionalStatus(projectPayload, 'status_proyek', errors)
@@ -158,6 +192,7 @@ const normalizeUpdatePayload = (payload, currentProject) => {
   return {
     judul_proyek: judulProyek,
     deskripsi_proyek: deskripsiProyek,
+    skills,
     requirements,
     kuota_maksimal: kuotaMaksimal || currentProject.kuota_maksimal,
     status_proyek: statusProyek || currentProject.status_proyek,
