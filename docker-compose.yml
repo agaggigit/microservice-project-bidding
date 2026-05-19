@@ -10,7 +10,7 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/bidding
     depends_on:
       - db
-    
+
     develop:
       watch:
         - action: rebuild
@@ -22,7 +22,7 @@ services:
             - node_modules/
 
   db:
-    image: postgres:18-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -30,7 +30,8 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - db-data:/var/lib/postgresql
+      - db-data:/var/lib/postgresql/data
+      - ./database_schema.sql:/docker-entrypoint-initdb.d/database_schema.sql
 
 volumes:
   db-data:
