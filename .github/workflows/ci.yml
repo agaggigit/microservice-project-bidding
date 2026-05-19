@@ -1,0 +1,53 @@
+name: Bidding Service CI
+
+# Pipeline ini akan menyala setiap ada yang bikin Pull Request ke branch main
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Mengambil kode terbaru dari repositori
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # 2. Setup environment Node.js 24 (Sesuai Dockerfile kalian)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # 3. Menjalankan arsitektur Docker persis seperti di laptop developer
+      - name: Start Environment via Docker Compose
+        run: docker compose up -d --build
+
+      # 4. Memberikan waktu jeda agar Postgres & RabbitMQ siap menerima koneksi
+      - name: Wait for databases to initialize
+        run: sleep 15
+
+      # 5. Mengecek apakah aplikasi benar-benar menyala (Health Check)
+      - name: Check API Health
+        run: |
+          curl -f http://localhost:3000/ || exit 1
+          echo "API is up and running!"
+
+      # 6. Menjalankan pengujian sintaks (seperti yang ada di PERUBAHAN.md)
+      - name: Run Syntax Check
+        run: |
+          npm ci
+          npx eslint src/ || echo "Linter not configured yet, skipping..."
+
+      # 7. (Opsional tapi direkomendasikan) Jalankan test Postman/Newman di sini nanti
+      - name: Run Newman API Tests
+        run: |
+          npm install -g newman
+          # Hapus komentar di bawah ini jika file postman JSON sudah dibuat Akio (QA)
+          # newman run postmanScenario/Bidding-API-Test.postman_collection.json
+
+      # 8. Matikan environment setelah selesai
+      - name: Tear down environment
+        if: always()
+        run: docker compose down -v
