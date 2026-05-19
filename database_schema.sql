@@ -1,4 +1,4 @@
--- 1. Buat ENUM untuk tipe status agar data konsisten
+
 CREATE TYPE status_proyek_enum AS ENUM ('Open', 'Full', 'Closed');
 -- Tambahkan 'Queued' ke dalam ENUM
 CREATE TYPE status_bid_enum AS ENUM ('Pending', 'Accepted', 'Rejected', 'Queued');
