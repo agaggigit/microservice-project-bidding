@@ -57,10 +57,10 @@ class BiddingController {
       }
 
       // --- PERUBAHAN 2: Hapus group_id dari destructuring req.body ---
-      const { project_id, priority, document_url, student_id, tawaran_harga, tawaran_waktu } = req.body;
+      const { project_id, group_id ,priority, document_url, student_id, tawaran_harga, tawaran_waktu } = req.body;
 
       // --- PERUBAHAN 3: Paksa group_id pakai ID dari token auth ---
-      const group_id = req.user.id;
+      //const group_id = req.user.id;
 
       // Validation: Check required fields (group_id sudah pasti ada dari token, jadi tidak perlu dicek lagi di sini)
       if (!project_id || !priority || !document_url || !student_id || !tawaran_harga || !tawaran_waktu) {
