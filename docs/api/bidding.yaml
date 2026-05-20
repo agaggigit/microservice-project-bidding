@@ -1,0 +1,227 @@
+# 📚 Project Bidding Microservice API Documentation
+
+## Overview
+
+This is the actual API documentation for the Project Bidding Service. The microservice provides endpoints for:
+- ✅ Project management (CRUD)
+- ✅ Bidding submission and retrieval (with role-based filtering)
+- ✅ Negotiation creation and history
+
+**Base URL:** `http://localhost:3000/api`
+
+---
+
+## Authentication
+
+All endpoints except project listing use header-based authentication:
+
+```
+X-User-ID: <user_id>
+X-User-Type: <'talent' or 'mitra'>
+```
+
+**User Types:**
+- `talent` - Groups/Students (can submit bids)
+- `mitra` - Project Partners (can create projects)
+
+---
+
+## Endpoints
+
+### Projects
+
+#### Create Project
+```
+POST /projects
+```
+
+**Request Body:**
+```json
+{
+  "mitra_id": 1,
+  "judul_proyek": "Web Development Project",
+  "deskripsi_proyek": "Build a responsive website",
+  "requirements": "React, Node.js, PostgreSQL",
+  "kuota_maksimal": 3,
+  "budget_awal": 50000000
+}
+```
+
+**Response (201):**
+```json
+{
+  "message": "Project created successfully",
+  "data": {
+    "proyek_id": 1,
+    "mitra_id": 1,
+    "judul_proyek": "Web Development Project",
+    "status_proyek": "Open",
+    "created_at": "2026-05-13T10:00:00Z"
+  }
+}
+```
+
+#### Get All Projects
+```
+GET /projects
+```
+
+**Response (200):**
+```json
+{
+  "message": "Projects retrieved successfully",
+  "data": [
+    {
+      "proyek_id": 1,
+      "mitra_id": 1,
+      "judul_proyek": "Web Development Project",
+      "status_proyek": "Open",
+      "kuota_maksimal": 3,
+      "budget_awal": 50000000
+    }
+  ]
+}
+```
+
+#### Get Project by ID
+```
+GET /projects/:id
+```
+
+**Response (200):** Same as single project object above
+
+#### Update Project
+```
+PUT /projects/:id
+```
+
+**Request Body:** (All fields optional)
+```json
+{
+  "judul_proyek": "Updated Title",
+  "status_proyek": "Full",
+  "kuota_maksimal": 5
+}
+```
+
+#### Delete Project
+```
+DELETE /projects/:id
+```
+
+**Response (200):** Returns deleted project
+
+---
+
+### Bidding
+
+#### Submit Bid
+```
+POST /bidding
+```
+
+**Request Body:**
+```json
+{
+  "group_id": "group-123",
+  "project_id": 1,
+  "student_id": "student-456",
+  "priority": 1,
+  "document_url": "https://drive.google.com/proposal",
+  "tawaran_harga": 45000000,
+  "tawaran_waktu": "2026-06-30"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Bid created successfully",
+  "data": {
+    "bid_id": 1,
+    "group_id": "group-123",
+    "project_id": 1,
+    "status": "Queued",
+    "priority": 1,
+    "created_at": "2026-05-13T11:00:00Z"
+  }
+}
+```
+
+**Error Response (409):**
+```json
+{
+  "success": false,
+  "message": "Group has already bid on this project",
+  "code": "DUPLICATE_BID"
+}
+```
+
+#### Get Bids (Role-Based)
+```
+GET /bidding
+Headers: X-User-ID, X-User-Type
+```
+
+**Behavior:**
+- `mitra` - Returns bids for their projects only
+- `talent` - Returns bids they submitted only
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Bids retrieved successfully",
+  "data": {
+    "bids": [
+      {
+        "bid_id": 1,
+        "proyek_id": 1,
+        "kelompok_id": "group-123",
+        "status_bid": "Queued",
+        "urutan_prioritas": 1,
+        "waktu_bid": "2026-05-13T11:00:00Z",
+        "judul_proyek": "Web Development Project"
+      }
+    ],
+    "count": 1,
+    "user_type": "mitra"
+  }
+}
+```
+
+---
+
+### Negotiation
+
+#### Create Negotiation
+```
+POST /negotiating/:bidid
+```
+
+**Request Body:**
+```json
+{
+  "bid_id": 1,
+  "response_harga": 48000000,
+  "response_waktu": "2026-06-25",
+  "role_": "Mitra"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Negotiated bid created successfully",
+  "data": {
+    "nego_id": 1,
+    "bid_id": 1,
+    "response_harga": 48000000,
+    "response_waktu": "2026-06-25",
+    "role_": "Mitra",
+    "created_at": "2026-05-13T12:00:00Z"
+  }
+}
+```

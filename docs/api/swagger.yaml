@@ -1,0 +1,379 @@
+openapi: 3.0.0
+info:
+  title: Project Bidding Microservice API
+  description: API for managing projects, bids, and negotiations
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: dev@example.com
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.example.com/api
+    description: Production server
+
+tags:
+  - name: Projects
+    description: Project management endpoints
+  - name: Bidding
+    description: Bid submission and management
+  - name: Negotiation
+    description: Negotiation between partners and groups
+
+paths:
+  /projects:
+    post:
+      summary: Create a new project
+      tags:
+        - Projects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInput'
+      responses:
+        201:
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        400:
+          description: Invalid input
+        401:
+          description: Unauthorized
+
+    get:
+      summary: Get all projects
+      tags:
+        - Projects
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Open, Full, Closed]
+      responses:
+        200:
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+  /projects/{projectId}:
+    get:
+      summary: Get project details
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        404:
+          description: Project not found
+
+    put:
+      summary: Update project
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInput'
+      responses:
+        200:
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+    delete:
+      summary: Delete project
+      tags:
+        - Projects
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Project deleted
+        404:
+          description: Project not found
+
+  /bidding:
+    post:
+      summary: Submit a bid
+      tags:
+        - Bidding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidInput'
+      responses:
+        201:
+          description: Bid submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+        400:
+          description: Invalid input
+
+    get:
+      summary: Get all bids
+      tags:
+        - Bidding
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bid'
+
+  /bidding/{bidId}:
+    get:
+      summary: Get bid details
+      tags:
+        - Bidding
+      parameters:
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Bid details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+
+  /negotiating/{bidId}:
+    post:
+      summary: Send negotiation response
+      tags:
+        - Negotiation
+      parameters:
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NegotiationInput'
+      responses:
+        201:
+          description: Negotiation response recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Negotiation'
+
+    get:
+      summary: Get negotiation history
+      tags:
+        - Negotiation
+      parameters:
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Negotiation history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Negotiation'
+
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        proyek_id:
+          type: integer
+        mitra_id:
+          type: integer
+        judul_proyek:
+          type: string
+        deskripsi_proyek:
+          type: string
+        requirements:
+          type: string
+        kuota_maksimal:
+          type: integer
+        budget_awal:
+          type: number
+          format: decimal
+        tanggal_selesai:
+          type: string
+          format: date
+        status_proyek:
+          type: string
+          enum: [Open, Full, Closed]
+        created_at:
+          type: string
+          format: date-time
+
+    ProjectInput:
+      type: object
+      required:
+        - mitra_id
+        - judul_proyek
+        - deskripsi_proyek
+        - kuota_maksimal
+        - budget_awal
+      properties:
+        mitra_id:
+          type: integer
+        judul_proyek:
+          type: string
+        deskripsi_proyek:
+          type: string
+        requirements:
+          type: string
+        kuota_maksimal:
+          type: integer
+        budget_awal:
+          type: number
+          format: decimal
+        tanggal_selesai:
+          type: string
+          format: date
+
+    Bid:
+      type: object
+      properties:
+        bid_id:
+          type: integer
+        proyek_id:
+          type: integer
+        kelompok_id:
+          type: integer
+        tawaran_harga:
+          type: number
+          format: decimal
+        tawaran_waktu:
+          type: integer
+        dokumen_url:
+          type: string
+        status_bid:
+          type: string
+          enum: [Pending, Accepted, Rejected, Queued]
+        created_at:
+          type: string
+          format: date-time
+
+    BidInput:
+      type: object
+      required:
+        - proyek_id
+        - kelompok_id
+        - tawaran_harga
+        - tawaran_waktu
+      properties:
+        proyek_id:
+          type: integer
+        kelompok_id:
+          type: integer
+        tawaran_harga:
+          type: number
+          format: decimal
+        tawaran_waktu:
+          type: integer
+        dokumen_url:
+          type: string
+
+    Negotiation:
+      type: object
+      properties:
+        nego_id:
+          type: integer
+        bid_id:
+          type: integer
+        response_harga:
+          type: number
+          format: decimal
+        response_waktu:
+          type: integer
+        role_:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    NegotiationInput:
+      type: object
+      required:
+        - response_harga
+        - response_waktu
+        - role_
+      properties:
+        response_harga:
+          type: number
+          format: decimal
+        response_waktu:
+          type: integer
+        role_:
+          type: string
+          enum: [Mitra, Kelompok]
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
