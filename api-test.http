@@ -1,0 +1,168 @@
+### =============================================
+### PROJECTS API
+### =============================================
+
+### Test API Root
+GET http://localhost:3000/
+
+### Lihat Semua Proyek (public — no auth required)
+GET http://localhost:3000/api/projects
+
+### Cari Proyek by Keyword (Search)
+GET http://localhost:3000/api/projects?search=React
+
+### Filter Proyek by Status dan Budget
+GET http://localhost:3000/api/projects?status=Open&budget_min=4000000&budget_max=10000000
+
+### Dashboard Client: Lihat Proyek Milik Sendiri
+GET http://localhost:3000/api/projects?mitra_id=1
+
+### Lihat Detail Proyek (public)
+GET http://localhost:3000/api/projects/1
+
+### Buat Proyek Baru (requires auth)
+POST http://localhost:3000/api/projects
+Content-Type: application/json
+X-User-ID: 1
+X-User-Type: client
+
+{
+  "judul_proyek": "Aplikasi E-Commerce",
+  "deskripsi_proyek": "Platform belanja online modern",
+  "skills": ["Frontend", "Backend", "Database"],
+  "requirements": "Pengalaman dengan React dan Node.js",
+  "mitra_id": 1,
+  "kuota_maksimal": 3,
+  "status_proyek": "Open",
+  "budget_awal": 5000000
+}
+
+### Update Proyek (requires auth)
+PUT http://localhost:3000/api/projects/1
+Content-Type: application/json
+X-User-ID: 1
+X-User-Type: client
+
+{
+  "judul_proyek": "Aplikasi E-Commerce v2",
+  "deskripsi_proyek": "Platform belanja online modern (updated)",
+  "skills": ["Frontend", "Backend", "Database"],
+  "requirements": "React, Node.js, PostgreSQL",
+  "budget_awal": 7500000
+}
+
+### Hapus Proyek (requires auth)
+DELETE http://localhost:3000/api/projects/1
+X-User-ID: 1
+X-User-Type: client
+
+
+
+
+### =============================================
+### BIDDING API
+### =============================================
+
+### Buat Bid Baru (requires auth)
+POST http://localhost:3000/api/bidding
+Content-Type: application/json
+X-User-ID: MHS001
+X-User-Type: talent
+
+{
+  "project_id": 4,
+  "group_id": "KLP001",
+  "student_id": "MHS001",
+  "priority": 1,
+  "document_url": "https://drive.google.com/file/d/proposal-sistem.pdf",
+  "tawaran_harga": 4500000,
+  "tawaran_waktu": "2026-06-20"
+}
+
+### Lihat Semua Bid — sebagai Client (otomatis terfilter by proyek miliknya)
+GET http://localhost:3000/api/bidding
+X-User-ID: 1
+X-User-Type: client
+
+### Lihat Semua Bid — sebagai Talent (otomatis terfilter by kelompoknya)
+GET http://localhost:3000/api/bidding
+X-User-ID: KLP001
+X-User-Type: talent
+
+### Lihat Detail Bid by ID
+GET http://localhost:3000/api/bidding/1
+X-User-ID: 1
+X-User-Type: client
+
+### UPDATE STATUS BID (ACCEPT/REJECT) - CRITICAL ENDPOINT WITH DB LOCKING
+### Hanya client pemilik proyek atau admin yang bisa akses ini
+PUT http://localhost:3000/api/bidding/1/status
+Content-Type: application/json
+X-User-ID: 1
+X-User-Type: client
+
+{
+  "status": "Accepted"
+}
+
+
+
+
+
+### =============================================
+### NEGOTIATING API
+### =============================================
+
+### Buat Negosiasi Baru (bid_id di URL param)
+POST http://localhost:3000/api/negotiating/1
+Content-Type: application/json
+X-User-ID: KLP001
+X-User-Type: talent
+
+{
+  "response_harga": 4200000,
+  "response_waktu": "2026-06-25"
+}
+
+### Buat Negosiasi — Response dari Client
+POST http://localhost:3000/api/negotiating/1
+Content-Type: application/json
+X-User-ID: 1
+X-User-Type: client
+
+{
+  "response_harga": 4350000,
+  "response_waktu": "2026-06-22"
+}
+
+### Lihat Semua Negosiasi
+GET http://localhost:3000/api/negotiating/
+X-User-ID: 1
+X-User-Type: client
+
+### Lihat Negosiasi per Bid ID
+GET http://localhost:3000/api/negotiating/1
+X-User-ID: 1
+X-User-Type: client
+
+### UPDATE STATUS NEGOSIASI (FINAL DEAL ACCEPT/REJECT)
+### Endpoint ini otomatis sinkronisasi harga/waktu ke tabel bid jika Accepted
+PUT http://localhost:3000/api/negotiating/1/status
+Content-Type: application/json
+X-User-ID: 1
+X-User-Type: client
+
+{
+  "status": "Accepted"
+}
+
+### Hapus Negosiasi
+DELETE http://localhost:3000/api/negotiating/
+Content-Type: application/json
+X-User-ID: KLP001
+X-User-Type: talent
+
+{
+  "nego_id": 1,
+  "bid_id": 1
+}
