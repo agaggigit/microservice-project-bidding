@@ -138,11 +138,26 @@ const remove = async (id) => {
   return result.rows[0]
 }
 
+const findPopular = async (limit = 10) => {
+  const sql = `
+    SELECT p.*, COUNT(b.bid_id) AS total_bids
+    FROM proyek p
+    LEFT JOIN bid b ON p.proyek_id = b.proyek_id
+    GROUP BY p.proyek_id
+    ORDER BY total_bids DESC, p.created_at DESC
+    LIMIT $1
+  `
+
+  const result = await db.query(sql, [limit])
+  return result.rows
+}
+
 module.exports = {
   create,
   findAll,
   findById,
   update,
   remove,
-  ensureMitraExists
+  ensureMitraExists,
+  findPopular
 }
