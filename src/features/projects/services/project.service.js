@@ -211,7 +211,13 @@ const createProject = async (payload) => {
 }
 
 const getProjects = async (queryFilters = {}) => {
-  return projectRepository.findAll(queryFilters)
+  const projects = await projectRepository.findAll(queryFilters)
+
+  if (queryFilters.search && projects.length === 0) {
+    throw createValidationError(['No projects found for search query'])
+  }
+
+  return projects
 }
 
 const getProjectById = async (id) => {
