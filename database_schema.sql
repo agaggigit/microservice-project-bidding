@@ -18,7 +18,7 @@ CREATE TYPE user_role_enum AS ENUM ('talent', 'client', 'admin');
 
 -- 2. Tabel Mitra (Pemilik Proyek)
 CREATE TABLE mitra (
-    mitra_id SERIAL PRIMARY KEY,
+    mitra_id VARCHAR(50) PRIMARY KEY,
     nama_mitra VARCHAR(255) NOT NULL,
     kontak_mitra VARCHAR(255) NOT NULL
 );
@@ -26,7 +26,7 @@ CREATE TABLE mitra (
 -- 3. Tabel Proyek
 CREATE TABLE proyek (
     proyek_id SERIAL PRIMARY KEY,
-    mitra_id INT NOT NULL,
+    mitra_id VARCHAR(50) NOT NULL,
     judul_proyek VARCHAR(255) NOT NULL,
     deskripsi_proyek TEXT NOT NULL,
     skills project_skill_enum[] NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE negosiasi(
     response_harga DECIMAL(15, 2) NOT NULL,
     response_waktu DATE NOT NULL,
     role_ user_role_enum NOT NULL,
-    status status_nego_enum DEFAULT 'Pending', -- 👈 INI TAMBAHANNYA
+    status status_nego_enum DEFAULT 'Pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_bid FOREIGN KEY(bid_id) REFERENCES bid(bid_id)  
 );

@@ -124,7 +124,7 @@ const normalizeCreatePayload = (payload) => {
 
   const mitraId = projectPayload.mitra_id === undefined || projectPayload.mitra_id === null
     ? null
-    : parsePositiveInteger(projectPayload.mitra_id, 'mitra_id', errors)
+    : getRequiredString(projectPayload, 'mitra_id', errors)
 
   if (projectPayload.mitra_id === undefined || projectPayload.mitra_id === null) {
     errors.push('mitra_id is required')
@@ -200,6 +200,10 @@ const normalizeUpdatePayload = (payload, currentProject) => {
   }
 }
 
+const ensureMitraExists = async (mitraId, namaMitra, kontakMitra) => {
+  return projectRepository.ensureMitraExists(mitraId, namaMitra, kontakMitra)
+}
+
 const createProject = async (payload) => {
   const projectData = normalizeCreatePayload(payload)
 
@@ -207,7 +211,6 @@ const createProject = async (payload) => {
 }
 
 const getProjects = async (queryFilters = {}) => {
-  // Teruskan query parameter dari controller ke repository
   return projectRepository.findAll(queryFilters)
 }
 
@@ -251,5 +254,6 @@ module.exports = {
   getProjects,
   getProjectById,
   updateProject,
-  deleteProject
+  deleteProject,
+  ensureMitraExists
 }
